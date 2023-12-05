@@ -22,99 +22,99 @@ const Login = ({ setToken }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // let localstatus = "";
-    // let localType = "";
-    // let check = 0;
+    let localstatus = "";
+    let localType = "";
+    let check = 0;
 
-    // if (dataLogin.username) {
-    //   if (dataLogin.username === "000") {
-    //     localstatus = "เจ้าของระบบ";
-    //     localType = "main-admin";
-    //     check = 1;
-    //   } else if (dataLogin.username === "111") {
-    //     localstatus = "ผู้ดูแลระบบ";
-    //     localType = "admin";
-    //     check = 1;
-    //   } else if (dataLogin.username === "222") {
-    //     localstatus = "ลูกค้า";
-    //     localType = "user";
-    //     check = 1;
-    //   } else if (dataLogin.username === "333") {
-    //     localstatus = "บ้านแชร์ A-001";
-    //     localType = "home";
-    //     check = 1;
-    //   } else if (dataLogin.username === "444") {
-    //     localstatus = "พนักงานในบ้านแชร์ A-001";
-    //     localType = "member";
-    //     check = 1;
-    //   } else {
-    //     toast.error("รหัสผ่านไม่ถูกต้อง 1 !");
-    //     check = 0;
-    //   }
-    //   {
-    //     check === 1 && localStorage.setItem("Token", "1234");
-    //   }
-    //   localStorage.setItem("status", localstatus);
-    //   localStorage.setItem("Type", localType);
-    //   setTimeout(() => {
-    //     window.location.reload();
-    //   }, 1000);
-    // } else {
-    //   toast.error("รหัสผ่านไม่ถูกต้อง  2!");
-    // }
+    if (dataLogin.username) {
+      if (dataLogin.username === "000") {
+        localstatus = "เจ้าของระบบ";
+        localType = "main-admin";
+        check = 1;
+      } else if (dataLogin.username === "111") {
+        localstatus = "ผู้ดูแลระบบ";
+        localType = "admin";
+        check = 1;
+      } else if (dataLogin.username === "222") {
+        localstatus = "ลูกค้า";
+        localType = "user";
+        check = 1;
+      } else if (dataLogin.username === "333") {
+        localstatus = "บ้านแชร์ A-001";
+        localType = "home";
+        check = 1;
+      } else if (dataLogin.username === "444") {
+        localstatus = "พนักงานในบ้านแชร์ A-001";
+        localType = "member";
+        check = 1;
+      } else {
+        toast.error("รหัสผ่านไม่ถูกต้อง 1 !");
+        check = 0;
+      }
+      {
+        check === 1 && localStorage.setItem("Token", "1234");
+      }
+      localStorage.setItem("status", localstatus);
+      localStorage.setItem("Type", localType);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } else {
+      toast.error("รหัสผ่านไม่ถูกต้อง  2!");
+    }
 
     // SERVER
 
-    try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_APP_API}/login`,
-        dataLogin
-      );
-      console.log(res.data);
+    // try {
+    //   const res = await axios.post(
+    //     `${import.meta.env.VITE_APP_API}/login`,
+    //     dataLogin
+    //   );
+    //   console.log(res.data);
 
-      if (res.data.error) {
-        toast.error(res.data.error);
-      } else {
-        toast.success(res.data.result);
+    //   if (res.data.error) {
+    //     toast.error(res.data.error);
+    //   } else {
+    //     toast.success(res.data.result);
 
-        const token = res.data.token;
-        const decoded = jwtDecode(token);
-        console.log(decoded);
-        localStorage.setItem("Token", token);
-        localStorage.setItem("id", decoded.id);
-        localStorage.setItem("name", decoded.f_name +" " + decoded.l_nane);
+    //     const token = res.data.token;
+    //     const decoded = jwtDecode(token);
+    //     console.log(decoded);
+    //     localStorage.setItem("Token", token);
+    //     localStorage.setItem("id", decoded.id);
+    //     localStorage.setItem("name", decoded.f_name +" " + decoded.l_nane);
 
-        // แบ่ง navigate
-        if (decoded.level === "0") {
-          // status - 0
-          localStorage.setItem("status", "เจ้าของระบบ");
-          localStorage.setItem("Type", "main-admin");
-        } else if (decoded.level === "1") {
-          // status - 1
-          localStorage.setItem("status", "ผู้ดูแลระบบ");
-          localStorage.setItem("Type", "admin");
-        } else if (decoded.level === "2") {
-          // status - 2
-          localStorage.setItem("status", "ลูกค้า");
-          localStorage.setItem("Type", "user");
-        } else if (decoded.level === "3") {
-          // status - 3
-          fetchDataHome(decoded.share_w_id , decoded.level)
-          localStorage.setItem("Type", "home");
-        } else if (decoded.level === "4") {
-          // status - 4
-          fetchDataHome(decoded.share_w_id , decoded.level)
-          localStorage.setItem("Type", "member");
-        }
-      setTimeout(() => {
-        window.location.reload()
-       }, 1000);
+    //     // แบ่ง navigate
+    //     if (decoded.level === "0") {
+    //       // status - 0
+    //       localStorage.setItem("status", "เจ้าของระบบ");
+    //       localStorage.setItem("Type", "main-admin");
+    //     } else if (decoded.level === "1") {
+    //       // status - 1
+    //       localStorage.setItem("status", "ผู้ดูแลระบบ");
+    //       localStorage.setItem("Type", "admin");
+    //     } else if (decoded.level === "2") {
+    //       // status - 2
+    //       localStorage.setItem("status", "ลูกค้า");
+    //       localStorage.setItem("Type", "user");
+    //     } else if (decoded.level === "3") {
+    //       // status - 3
+    //       fetchDataHome(decoded.share_w_id , decoded.level)
+    //       localStorage.setItem("Type", "home");
+    //     } else if (decoded.level === "4") {
+    //       // status - 4
+    //       fetchDataHome(decoded.share_w_id , decoded.level)
+    //       localStorage.setItem("Type", "member");
+    //     }
+    //   setTimeout(() => {
+    //     window.location.reload()
+    //    }, 1000);
 
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error(error)
-    }
+    //   }
+    // } catch (error) {
+    //   console.log(error);
+    //   toast.error(error)
+    // }
   };
 
   const fetchDataHome = async(share_w_id, level)=> {
