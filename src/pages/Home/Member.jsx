@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PencilIcon } from "@heroicons/react/24/solid";
 
 import {
@@ -16,15 +16,17 @@ import {
   HiOutlineChatAlt2,
   HiPencilAlt,
   HiTrash,
-  HiOutlineDesktopComputer, 
+  HiOutlineDesktopComputer,
   HiOutlinePlusSm,
-  HiOutlineUserGroup
+  HiOutlineUserGroup,
 } from "react-icons/hi";
 import WongShareModal from "../../components/modal/Basic/WongShareModal";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import ViewWongShare from "../../components/modal/Basic/ViewWongShare";
 import AddMember from "../../components/modal/Member/AddMember";
+import axios from "axios";
+import ViewMember from "../../components/modal/Member/ViewMember";
 
 const TABLE_HEAD = ["ลำดับ", "รหัส", "ชื่อพนักงาน", "Username", "แก้ไข/ลบ"];
 
@@ -81,14 +83,35 @@ const Member = () => {
   const handleOpen = (number) => (setOpen(!open), setId(number));
   const handleOpenView = (number) => (setOpenView(!openView), setId(number));
 
+  const [data, setData] = useState([]);
+  const [dataToModal , setDataToModal] = useState({})
+  const [search, setSearch] = useState("")
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = TABLE_ROWS.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(TABLE_ROWS.length / itemsPerPage);
+  const currentItems = data.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(data.length / itemsPerPage);
   const handlePageChange = (page) => {
     setCurrentPage(page);
+  };
+
+  const fetchData = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_APP_API}/sharehouse/mem-search?name=${search}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("Token")}`,
+          },
+        }
+      );
+      console.log(res.data);
+      setData(res.data);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleDelete = (id) => {
@@ -103,15 +126,45 @@ const Member = () => {
       cancelButtonText: "ยกเลิก",
     }).then((result) => {
       if (result.isConfirmed) {
-        toast.success("ลบข้อมูลสำเร็จ");
-      }
+        deleteRow(id)      }
     });
   };
 
+  const deleteRow = async (id) => {
+    try {
+      const res = await axios.delete(
+        `${import.meta.env.VITE_APP_API}/delete/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("Token")}`,
+          },
+        }
+      );
+      toast.success("ลบข้อมูลสำเร็จ");
+      fetchData()
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+
+  const handleDataToModal = (item, number)=>{
+   setDataToModal(item)
+   number === 1 && handleOpen(1)
+   number === 3 && handleOpenView(3)
+   
+  //  console.log(item);
+  }
+
+  useEffect(() => {
+    fetchData();
+  }, [search]);
+
   return (
     <div className="">
-      <AddMember handleOpen={handleOpen} open={open} id={id} />
-      <ViewWongShare handleOpen={handleOpenView} open={openView} id={id}   />
+      <AddMember handleOpen={handleOpen} open={open}  fetchData={fetchData} dataToModal={dataToModal} />
+      <ViewMember handleOpen={handleOpenView} open={openView} id={id} dataToModal={dataToModal} />
 
       <div className="flex flex-col md:flex-row   items-center  md:justify-between gap-4">
         <div className="flex gap-2">
@@ -126,17 +179,17 @@ const Member = () => {
 
         <div className="flex gap-2 flex-col items-center   md:flex-row">
           <div className="w-72 bg-slate-50 rounded-md  bg-gray-50  ">
-            <Input variant="outlined" label="ค้นหาพนักงาน" />
+            <Input variant="outlined" label="ค้นหาพนักงาน" onChange={(e)=>setSearch(e.target.value)} />
           </div>
           <div className="">
             <Button
-              onClick={() => handleOpen(null)}
+              onClick={() => (handleOpen(null) , setDataToModal({}))}
               variant="filled"
               color="purple"
               size="sm"
               className="text-sm  flex items-center gap-1  "
             >
-              <HiOutlinePlusSm size={20}  />
+              <HiOutlinePlusSm size={20} />
               สร้างพนักงาน
             </Button>
           </div>
@@ -165,99 +218,79 @@ const Member = () => {
               </tr>
             </thead>
             <tbody>
-              {currentItems.map(
-                (
-                  {
-                 
-                    amount,
-                    date,
-                    status,
-                    account,
-                   
-                  },
-                  index
-                ) => {
-                  const isLast = index === TABLE_ROWS.length - 1;
-                  const classes = isLast
-                    ? "p-4"
-                    : "p-4 border-b border-blue-gray-50";
+              {currentItems.map((item, index) => {
+                const isLast = index === data.length - 1;
+                const classes = isLast
+                  ? "p-4"
+                  : "p-4 border-b border-blue-gray-50";
 
-                  return (
-                    <tr key={index} className="hover:bg-gray-200">
-                      <td className={classes}>
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          {amount}
-                        </Typography>
-                      </td>
-                      <td className={classes}>
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          {date}
-                        </Typography>
-                      </td>
-                      <td className={classes}>
-                        <div className="w-max">
-                          <Chip
-                            size="sm"
-                            variant="ghost"
-                            value={status}
-                            color={
-                              status === "paid"
-                                ? "green"
-                                : status === "pending"
-                                ? "amber"
-                                : "red"
-                            }
-                          />
-                        </div>
-                      </td>
-                      <td className={classes}>
-                        <div className="flex items-center gap-3">
-                          <div className="flex flex-col">
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-normal capitalize"
-                            >
-                              {account.split("-").join(" ")} 
-                            </Typography>
-                         
-                          </div>
-                        </div>
-                      </td>
-                      <td className={classes}>
-                        <div className="flex  gap-2 ">
-                          <HiOutlineDesktopComputer
-                            size={24}
-                            color="white"
-                            className="cursor-pointer bg-gray-900 rounded-full w-8 h-8 p-1.5 "
-                            onClick={()=>handleOpenView(3)}
-                          />
-                          <HiPencilAlt
-                            size={24}
-                            color="white"
-                            className="cursor-pointer bg-purple-500 rounded-full w-8 h-8 p-1.5 "
-                            onClick={() => handleOpen(1)}
-                          />
-                          <HiTrash
-                            size={24}
-                            color="white"
-                            className="cursor-pointer bg-red-500 rounded-full w-8 h-8 p-1.5 "
-                            onClick={() => handleDelete(2)}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                }
-              )}
+                return (
+                  <tr key={index} className="hover:bg-gray-200">
+                    <td className={classes}>
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="font-normal"
+                      >
+                        {index + 1}
+                      </Typography>
+                    </td>
+                    <td className={classes}>
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="font-normal"
+                      >
+                        {item.code}
+                      </Typography>
+                    </td>
+
+                    <td className={classes}>
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="font-normal"
+                      >
+                        {item.f_name}
+                      </Typography>
+                    </td>
+
+                    <td className={classes}>
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="font-normal"
+                      >
+                        {item.username}
+                      </Typography>
+                    </td>
+            
+             
+                    <td className={classes}>
+                      <div className="flex  gap-2 ">
+                        <HiOutlineDesktopComputer
+                          size={24}
+                          color="white"
+                          className="cursor-pointer bg-gray-900 rounded-full w-8 h-8 p-1.5 "
+                          onClick={() => handleDataToModal(item,3)}
+                        />
+                        <HiPencilAlt
+                          size={24}
+                          color="white"
+                          className="cursor-pointer bg-purple-500 rounded-full w-8 h-8 p-1.5 "
+                          onClick={() => handleDataToModal(item,1)}
+                        />
+                        <HiTrash
+                          size={24}
+                          color="white"
+                          className="cursor-pointer bg-red-500 rounded-full w-8 h-8 p-1.5 "
+                          onClick={() => handleDelete(item.user_id)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </CardBody>
@@ -302,7 +335,3 @@ const Member = () => {
 };
 
 export default Member;
-
-
-
-

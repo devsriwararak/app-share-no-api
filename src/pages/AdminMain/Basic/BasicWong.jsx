@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PencilIcon } from "@heroicons/react/24/solid";
 
 import {
@@ -21,15 +21,23 @@ import {
   HiOutlinePlusCircle,
   HiPencilAlt,
   HiTrash,
-  HiOutlineDesktopComputer, 
-  HiOutlinePlusSm
+  HiOutlineDesktopComputer,
+  HiOutlinePlusSm,
 } from "react-icons/hi";
 import WongShareModal from "../../../components/modal/Basic/WongShareModal";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import ViewWongShare from "../../../components/modal/Basic/ViewWongShare";
+import axios from "axios";
 
-const TABLE_HEAD = ["ลำดับ", "ชื่อวงแชร์", "Date", "Status", "แก้ไข/ลบ"];
+const TABLE_HEAD = [
+  "ลำดับ",
+  "ชื่อวงแชร์",
+  "รูปแบบวงแชร์",
+  "จำนวนมือ",
+  "เงินต้น",
+  "แก้ไข/ลบ",
+];
 
 const TABLE_ROWS = [
   {
@@ -112,14 +120,30 @@ const BasicWong = () => {
   const handleOpen = (number) => (setOpen(!open), setId(number));
   const handleOpenView = (number) => (setOpenView(!openView), setId(number));
 
+  const [data, setData] = useState([]);
+  const [search, setSearch] = useState("");
+  const [dataToModal, setDataToModal] = useState({});
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = TABLE_ROWS.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(TABLE_ROWS.length / itemsPerPage);
+  const currentItems = data.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(data.length / itemsPerPage);
   const handlePageChange = (page) => {
     setCurrentPage(page);
+  };
+
+  const fetchData = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_APP_API}/share/share-search?name=${search}`
+      );
+      console.log(res.data);
+      setData(res.data);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleDelete = (id) => {
@@ -134,15 +158,55 @@ const BasicWong = () => {
       cancelButtonText: "ยกเลิก",
     }).then((result) => {
       if (result.isConfirmed) {
-        toast.success("ลบข้อมูลสำเร็จ");
+        deleteRow(id);
       }
     });
   };
 
+  const deleteRow = async (id) => {
+    try {
+      const res = await axios.delete(
+        `${import.meta.env.VITE_APP_API}/share/delete/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("Token")}`,
+          },
+        }
+      );
+      console.log(res.data);
+      toast.success("ลบข้อมูลสำเร็จ");
+      fetchData();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleSelectToModal = (item) => {
+    handleOpen(1);
+    if (item.id) {
+      setDataToModal(item);
+    }
+  };
+
+  const handleViewModal = (item)=>{
+    handleOpenView(3)
+    setDataToModal(item)
+  }
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   return (
     <div className="">
-      <WongShareModal handleOpen={handleOpen} open={open} id={id} />
-      <ViewWongShare handleOpen={handleOpenView} open={openView} id={id}   />
+      <WongShareModal
+        handleOpen={handleOpen}
+        open={open}
+        id={id}
+        fetchData={fetchData}
+        dataToModal={dataToModal}
+      />
+      <ViewWongShare handleOpen={handleOpenView} open={openView} id={id} dataToModal={dataToModal} />
 
       <div className="flex flex-col md:flex-row   items-center  md:justify-between gap-4">
         <div className="flex gap-2">
@@ -157,17 +221,21 @@ const BasicWong = () => {
 
         <div className="flex gap-2 flex-col items-center   md:flex-row">
           <div className="w-72 bg-slate-50 rounded-md  bg-gray-50  ">
-            <Input variant="outlined" label="ค้นหาวงค์แชร์" />
+            <Input
+              variant="outlined"
+              label="ค้นหาวงค์แชร์"
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
           <div className="">
             <Button
-              onClick={() => handleOpen(null)}
+              onClick={() => (handleOpen(null), setDataToModal(null))}
               variant="filled"
               color="purple"
               size="sm"
               className="text-sm  flex items-center gap-1 "
             >
-              <HiOutlinePlusSm size={20}  />
+              <HiOutlinePlusSm size={20} />
               สร้างวงค์แชร์
             </Button>
           </div>
@@ -176,7 +244,7 @@ const BasicWong = () => {
 
       <Card className=" h-[550px]  w-full mx-auto   md:w-full  mt-8 shadow-lg ">
         <CardBody className="  px-2 overflow-scroll -mt-4">
-          <table className=" w-full  min-w-max table-auto text-left">
+          <table className=" w-full  min-w-max table-auto text-center">
             <thead>
               <tr>
                 {TABLE_HEAD.map((head) => (
@@ -196,106 +264,88 @@ const BasicWong = () => {
               </tr>
             </thead>
             <tbody>
-              {currentItems.map(
-                (
-                  {
-                    name,
-                    amount,
-                    date,
-                    status,
-                    account,
-                    accountNumber,
-                    expiry,
-                  },
-                  index
-                ) => {
-                  const isLast = index === TABLE_ROWS.length - 1;
-                  const classes = isLast
-                    ? "p-4"
-                    : "p-4 border-b border-blue-gray-50";
+              {currentItems.map((item, index) => {
+                const isLast = index === data.length - 1;
+                const classes = isLast
+                  ? "p-4"
+                  : "p-4 border-b border-blue-gray-50";
 
-                  return (
-                    <tr key={index} className="hover:bg-gray-200">
-                      <td className={classes}>
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          {amount}
-                        </Typography>
-                      </td>
-                      <td className={classes}>
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          {date}
-                        </Typography>
-                      </td>
-                      <td className={classes}>
-                        <div className="w-max">
-                          <Chip
-                            size="sm"
-                            variant="ghost"
-                            value={status}
-                            color={
-                              status === "paid"
-                                ? "green"
-                                : status === "pending"
-                                ? "amber"
-                                : "red"
-                            }
-                          />
-                        </div>
-                      </td>
-                      <td className={classes}>
-                        <div className="flex items-center gap-3">
-                          <div className="flex flex-col">
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-normal capitalize"
-                            >
-                              {account.split("-").join(" ")} {accountNumber}
-                            </Typography>
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-normal opacity-70"
-                            >
-                              {expiry}
-                            </Typography>
-                          </div>
-                        </div>
-                      </td>
-                      <td className={classes}>
-                        <div className="flex  gap-2 ">
-                          <HiOutlineDesktopComputer
-                            size={24}
-                            color="white"
-                            className="cursor-pointer bg-gray-900 rounded-full w-8 h-8 p-1.5 "
-                            onClick={()=>handleOpenView(3)}
-                          />
-                          <HiPencilAlt
-                            size={24}
-                            color="white"
-                            className="cursor-pointer bg-purple-500 rounded-full w-8 h-8 p-1.5 "
-                            onClick={() => handleOpen(1)}
-                          />
-                          <HiTrash
-                            size={24}
-                            color="white"
-                            className="cursor-pointer bg-red-500 rounded-full w-8 h-8 p-1.5 "
-                            onClick={() => handleDelete(2)}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                }
-              )}
+                return (
+                  <tr key={index} className="hover:bg-gray-200">
+                    <td className={classes}>
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="font-normal"
+                      >
+                        {index + 1}
+                      </Typography>
+                    </td>
+                    <td className={classes}>
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="font-normal"
+                      >
+                        {item.p_share_name}
+                      </Typography>
+                    </td>
+
+                    <td className={classes}>
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="font-normal"
+                      >
+                        {item.p_share_maintain}
+                      </Typography>
+                    </td>
+
+                    <td className={classes}>
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="font-normal"
+                      >
+                        {item.p_share_hand}
+                      </Typography>
+                    </td>
+
+                    <td className={classes}>
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="font-normal"
+                      >
+                        0000
+                      </Typography>
+                    </td>
+
+                    <td className={classes}>
+                      <div className="flex justify-center  gap-2 ">
+                        <HiOutlineDesktopComputer
+                          size={24}
+                          color="white"
+                          className="cursor-pointer bg-gray-900 rounded-full w-8 h-8 p-1.5 "
+                          onClick={() => handleViewModal(item) }
+                        />
+                        <HiPencilAlt
+                          size={24}
+                          color="white"
+                          className="cursor-pointer bg-purple-500 rounded-full w-8 h-8 p-1.5 "
+                          onClick={() => handleSelectToModal(item)}
+                        />
+                        <HiTrash
+                          size={24}
+                          color="white"
+                          className="cursor-pointer bg-red-500 rounded-full w-8 h-8 p-1.5 "
+                          onClick={() => handleDelete(item.id)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </CardBody>

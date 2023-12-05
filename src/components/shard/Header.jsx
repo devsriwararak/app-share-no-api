@@ -33,7 +33,7 @@ const Header = ({ openSidebar, setOpenSideBar }) => {
   return (
     <div className=" bg-white  h-16  flex justify-between items-center border-b-2 border-gray-200 shadow-sm fixed w-full md:w-10/12 z-10  ">
       <div className="mx-4 text-black">
-        สวัสดีคุณ : {localStorage.getItem("status")}
+      { `${localStorage.getItem('name')}  (${localStorage.getItem("status")})`}
       </div>
 
       <HiOutlineMenu

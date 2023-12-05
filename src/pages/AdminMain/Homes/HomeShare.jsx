@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   CardBody,
@@ -14,6 +14,7 @@ import HomeMemberModal from "../../../components/modal/HomeShare/HomeMemberModal
 import { HiDatabase, HiPencilAlt, HiTrash } from "react-icons/hi";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 const HomeShare = () => {
   const options = [
@@ -24,41 +25,23 @@ const HomeShare = () => {
 
   const TABLE_HEAD = ["ลำดับ", "รหัส", "ชื่อ", "username", "แก้ไข/ลบ"];
 
-  const TABLE_ROWS = [
-    {
-      name: "1",
-      job: "Manager",
-      date: "23/04/18",
-    },
-    {
-      name: "2",
-      job: "Developer",
-      date: "23/04/18",
-    },
-    {
-      name: "3",
-      job: "Executive",
-      date: "19/09/17",
-    },
-    {
-      name: "4",
-      job: "Developer",
-      date: "24/12/08",
-    },
-    {
-      name: "5",
-      job: "Manager",
-      date: "04/10/21",
-    },
-  ];
+
+
+  const [search1, setSearch1] = useState("");
+  const [search2, setSearch2] = useState("");
+
+    // State
+    const [dataHome, setDataHome] = useState([]);
+    const [dataMember, setDataMember] = useState([]);
+    const [dataToModal, setDataToModal] = useState({});
 
   // Footer Table 1
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = TABLE_ROWS.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(TABLE_ROWS.length / itemsPerPage);
+  const currentItems = dataHome.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(dataHome.length / itemsPerPage);
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
@@ -69,6 +52,34 @@ const HomeShare = () => {
 
   const handleOpen1 = () => setOpen1(!open1);
   const handleOpen2 = () => setOpen2(!open2);
+
+
+
+  // Fetch data home
+  const fetchDataHome = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_APP_API}/h-search?name=${search1}`
+      );
+      // console.log(res.data);
+      setDataHome(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // Fetch Data Member
+  const fetchDataMember = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_APP_API}/m-search?name=${search2}`
+      );
+      setDataMember(res.data);
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleDelete = (id) => {
     Swal.fire({
@@ -82,21 +93,63 @@ const HomeShare = () => {
       cancelButtonText: "ยกเลิก",
     }).then((result) => {
       if (result.isConfirmed) {
-        toast.success("ลบข้อมูลสำเร็จ");
+        deleteRow(id);
       }
     });
   };
 
+  const deleteRow = async (id) => {
+    try {
+      const res = await axios.delete(
+        `${import.meta.env.VITE_APP_API}/delete/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("Token")}`,
+          },
+        }
+      );
+      toast.success("ลบข้อมูลสำเร็จ");
+      fetchDataHome();
+      fetchDataMember()
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleDataToModal = (item, number) => {
+    console.log(item);
+    setDataToModal(item);
+    number === 1 ? handleOpen1() : handleOpen2();
+  };
+
+  useEffect(() => {
+    fetchDataHome();
+    fetchDataMember();
+  }, [search1, search2]);
+
   return (
     <>
-      <HomeAdminModal handleOpen={handleOpen1} open={open1} />
-      <HomeMemberModal handleOpen={handleOpen2} open={open2} />
+      <HomeAdminModal
+        handleOpen={handleOpen1}
+        open={open1}
+        fetchDataHome={fetchDataHome}
+        dataToModal={dataToModal}
+      />
+      <HomeMemberModal
+        handleOpen={handleOpen2}
+        open={open2}
+        fetchDataMember={fetchDataMember}
+        dataToModal={dataToModal}
+      />
 
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-      
-        <Typography variant="h5" color="blue-gray" className="mb-2 flex gap-2 items-center
-        ">
-        <HiDatabase/>  ข้อมูลบ้านแชร์และพนักงาน (ทั้งหมด)
+        <Typography
+          variant="h5"
+          color="blue-gray"
+          className="mb-2 flex gap-2 items-center
+        "
+        >
+          <HiDatabase /> ข้อมูลบ้านแชร์และพนักงาน (ทั้งหมด)
         </Typography>
         <div className="w-full md:w-4/12">
           <Select options={options} placeholder="เลือกบ้านแชร์" />
@@ -114,15 +167,18 @@ const HomeShare = () => {
                     color="blue-gray"
                     className="mb-2  font-bold"
                   >
-                    ข้อมูลเจ้าของบ้านแชร์
+                    เจ้าของบ้านแชร์
                   </Typography>
                 </div>
                 <div className="   ">
-                  <Input label="ค้นหาเจ้าของบ้านแชร์" />
+                  <Input
+                    label="ค้นหาเจ้าของบ้านแชร์"
+                    onChange={(e) => setSearch1(e.target.value)}
+                  />
                 </div>
                 <div className="   flex justify-end">
                   <Button
-                    onClick={handleOpen1}
+                    onClick={() => (handleOpen1(), setDataToModal({}))}
                     className="text-sm"
                     size="sm"
                     color="purple"
@@ -145,7 +201,6 @@ const HomeShare = () => {
                             variant="small"
                             color="blue-gray"
                             className="font-bold leading-none opacity-90"
-
                           >
                             {head}
                           </Typography>
@@ -154,15 +209,18 @@ const HomeShare = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {TABLE_ROWS.map(({ name, job, date }, index) => (
-                      <tr key={index} className="even:bg-blue-gray-50/50 hover:bg-gray-200">
+                    {dataHome.map((item, index) => (
+                      <tr
+                        key={index}
+                        className="even:bg-blue-gray-50/50 hover:bg-gray-200"
+                      >
                         <td className="p-4">
                           <Typography
                             variant="small"
                             color="blue-gray"
                             className="font-normal"
                           >
-                            {name}
+                            {index + 1}
                           </Typography>
                         </td>
                         <td className="p-4">
@@ -171,7 +229,7 @@ const HomeShare = () => {
                             color="blue-gray"
                             className="font-normal"
                           >
-                            {job}
+                            {item?.code || ""}
                           </Typography>
                         </td>
                         <td className="p-4">
@@ -180,30 +238,33 @@ const HomeShare = () => {
                             color="blue-gray"
                             className="font-normal"
                           >
-                            {name}
+                            {item?.f_name || ""}
                           </Typography>
                         </td>
+
                         <td className="p-4">
                           <Typography
                             variant="small"
                             color="blue-gray"
                             className="font-normal"
                           >
-                            {date}
+                            {item?.username || ""}
                           </Typography>
                         </td>
+
                         <td className="p-4">
                           <div className="flex  gap-2 ">
                             <HiPencilAlt
                               size={24}
                               color="white"
-                              className="cursor-pointer bg-purple-500 rounded-full w-8 h-8 p-1.5 "
+                              className="cursor-pointer bg-purple-500 rounded-full w-7 h-7 p-1.5 "
+                              onClick={() => handleDataToModal(item, 1)}
                             />
                             <HiTrash
                               size={24}
                               color="white"
-                              className="cursor-pointer bg-red-500 rounded-full w-8 h-8 p-1.5 "
-                              onClick={() => handleDelete(2)}
+                              className="cursor-pointer bg-red-500 rounded-full w-7 h-7 p-1.5 "
+                              onClick={() => handleDelete(item.id)}
                             />
                           </div>
                         </td>
@@ -259,14 +320,17 @@ const HomeShare = () => {
                   color="blue-gray"
                   className="mb-2  font-bold"
                 >
-                  ข้อมูลพนักงานบ้านแชร์
+                  พนักงานบ้านแชร์
                 </Typography>
                 <div className="flex-1">
-                  <Input label="ค้นหาเจ้าของบ้านแชร์" />
+                  <Input
+                    label="ค้นหาเจ้าของบ้านแชร์"
+                    onChange={(e) => setSearch2(e.target.value)}
+                  />
                 </div>
                 <div className="">
                   <Button
-                    onClick={handleOpen2}
+                    onClick={() => (handleOpen2(), setDataToModal({}))}
                     className="text-sm"
                     size="sm"
                     color="purple"
@@ -289,7 +353,7 @@ const HomeShare = () => {
                             variant="small"
                             color="blue-gray"
                             className="font-bold leading-none opacity-90"
-                            >
+                          >
                             {head}
                           </Typography>
                         </th>
@@ -297,15 +361,18 @@ const HomeShare = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {TABLE_ROWS.map(({ name, job, date }, index) => (
-                      <tr key={index} className="even:bg-blue-gray-50/50 hover:bg-gray-200">
+                    {dataMember.map((item, index) => (
+                      <tr
+                        key={index}
+                        className="even:bg-blue-gray-50/50 hover:bg-gray-200"
+                      >
                         <td className="p-4">
                           <Typography
                             variant="small"
                             color="blue-gray"
                             className="font-normal"
                           >
-                            {name}
+                            {index + 1}
                           </Typography>
                         </td>
                         <td className="p-4">
@@ -314,7 +381,7 @@ const HomeShare = () => {
                             color="blue-gray"
                             className="font-normal"
                           >
-                            {job}
+                            {item?.code}
                           </Typography>
                         </td>
                         <td className="p-4">
@@ -323,30 +390,33 @@ const HomeShare = () => {
                             color="blue-gray"
                             className="font-normal"
                           >
-                            {name}
+                            {item?.f_name}
                           </Typography>
                         </td>
+
                         <td className="p-4">
                           <Typography
                             variant="small"
                             color="blue-gray"
                             className="font-normal"
                           >
-                            {date}
+                            {item?.username}
                           </Typography>
                         </td>
+
                         <td className="p-4">
                           <div className="flex  gap-2 ">
                             <HiPencilAlt
                               size={24}
                               color="white"
-                              className="cursor-pointer bg-purple-500 rounded-full w-8 h-8 p-1.5 "
+                              className="cursor-pointer bg-purple-500 rounded-full w-7 h-7 p-1.5 "
+                              onClick={() => handleDataToModal(item, 2)}
                             />
                             <HiTrash
                               size={24}
                               color="white"
-                              className="cursor-pointer bg-red-500 rounded-full w-8 h-8 p-1.5 "
-                              onClick={() => handleDelete(2)}
+                              className="cursor-pointer bg-red-500 rounded-full w-7 h-7 p-1.5 "
+                              onClick={() => handleDelete(item.id)}
                             />
                           </div>
                         </td>

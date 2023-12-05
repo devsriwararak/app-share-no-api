@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PencilIcon } from "@heroicons/react/24/solid";
 
 import {
@@ -23,6 +23,7 @@ import WongShareModal from "../../components/modal/Basic/WongShareModal";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import ViewWongShare from "../../components/modal/Basic/ViewWongShare";
+import axios from "axios";
 
 const TABLE_HEAD = ["ลำดับ", "ชื่อวงแชร์", "Date", "Status", "แก้ไข/ลบ"];
 
@@ -107,6 +108,9 @@ const HomeWongShare = () => {
   const handleOpen = (number) => (setOpen(!open), setId(number));
   const handleOpenView = (number) => (setOpenView(!openView), setId(number));
 
+  // State
+  const [data, setData] = useState([])
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -116,6 +120,19 @@ const HomeWongShare = () => {
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
+
+  const fetchData = async()=>{
+try {
+  const res = await axios.get(`${import.meta.env.VITE_APP_API}/share/share-search?name=` , {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("Token")}`,
+    },
+  })
+  console.log(res.data);
+} catch (error) {
+  console.log(error);
+}
+  }
 
   const handleDelete = (id) => {
     Swal.fire({
@@ -133,6 +150,10 @@ const HomeWongShare = () => {
       }
     });
   };
+
+  useEffect(()=>{
+    fetchData()
+  },[])
 
   return (
     <div className="">

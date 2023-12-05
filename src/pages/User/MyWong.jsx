@@ -12,35 +12,28 @@ import MyWongWong from "./MyWongWong";
 import MyWongActivity from "./MyWongActivity";
 import { FcPlus } from "react-icons/fc";
 
-
-const TABLE_HEAD = ["ลำดับ", "บ้านแชร์", "เลือก"];
+const TABLE_HEAD = ["บ้านแชร์", "เลือก"];
 
 const TABLE_ROWS = [
   {
-    name: "1",
     job: "บ้านแชร์-001",
   },
   {
-    name: "2",
     job: "บ้านแชร์-002",
   },
   {
-    name: "3",
     job: "ไม่เลือก",
   },
 ];
 
 const TABLE_ROWS_2 = [
   {
-    name: "1",
     job: "วงค์ทดสอบ-001",
   },
   {
-    name: "2",
     job: "วงค์ทดสอบ-002",
   },
   {
-    name: "3",
     job: "ไม่เลือก",
   },
 ];
@@ -82,58 +75,19 @@ const MyWong = () => {
                 บ้านแชร์ (2)
               </h2>
               <div className="mt-2">
-                <Input label="ค้นหารหัส หรือ ชื่อบ้านแชร์" />
+                <Input label="ค้นหารหัส หรือ ชื่อบ้านแชร์" color="purple" />
               </div>
-              <Card className="w-full ">
-                <table className=" w-full mt-2 table-auto text-left ">
-                  <thead>
-                    <tr>
-                      {TABLE_HEAD.map((head) => (
-                        <th
-                          key={head}
-                          className="border-b border-blue-gray-100 bg-blue-gray-50 p-4"
-                        >
-                          <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-bold leading-none opacity-90"
-                          >
-                            {head}
-                          </Typography>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {TABLE_ROWS.map(({ name, job, date }, index) => (
-                      <tr key={name} className="even:bg-blue-gray-50/50 hover:bg-gray-200">
-                        <td className="p-4">
-                          <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-normal"
-                          >
-                            {name}
-                          </Typography>
-                        </td>
-                        <td className="p-4">
-                          <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-normal"
-                          >
-                            {job}
-                          </Typography>
-                        </td>
 
-                        <td className="p-4 flex justify-center cursor-pointer">
-                          <FcPlus onClick={() => handleClick_1(index)} size={23} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </Card>
+              <ul className="mt-3 overflow-y-scroll">
+                {TABLE_ROWS.map((item, index) => (
+                  <li className=" hover:bg-gray-200 py-2 flex justify-between items-center" key={index}>
+                    {`${item.job}`}{" "}
+                    <FcPlus className=" cursor-pointer" onClick={() => handleClick_1(index)} size={23} />
+                  </li>
+                ))}
+              </ul>
+
+       
 
               <hr className="mt-5 border-gray-300 " />
 
@@ -160,59 +114,19 @@ const MyWong = () => {
                   />
                 </div>
                 <div className="mt-2">
-                  <Input label="ค้นหารหัส หรือ ชื่อวงค์แชร์" />
+                  <Input label="ค้นหารหัส หรือ ชื่อวงค์แชร์" color="purple" />
                 </div>
-                <Card>
-                  <table className=" w-full mt-2 table-auto text-center ">
-                    <thead>
-                      <tr>
-                        {TABLE_HEAD.map((head) => (
-                          <th
-                            key={head}
-                            className="border-b border-blue-gray-100 bg-blue-gray-50 p-4"
-                          >
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-bold leading-none opacity-90"
-                            >
-                              {head}
-                            </Typography>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {TABLE_ROWS_2.map(({ name, job, date }, index) => (
-                        <tr key={name} className="even:bg-blue-gray-50/50">
-                          <td className="p-4">
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-normal"
-                            >
-                              {name}
-                            </Typography>
-                          </td>
-                          <td className="p-4">
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-normal"
-                            >
-                              {job}
-                            </Typography>
-                          </td>
 
-                    
-                          <td className="p-4 flex justify-center cursor-pointer">
-                          <FcPlus onClick={() => handleClick_2(index)} size={25} />
-                        </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </Card>
+                <ul className="mt-3 overflow-y-scroll">
+                {TABLE_ROWS_2.map((item, index) => (
+                  <li className=" hover:bg-gray-200 py-2 flex justify-between items-center" key={index}>
+                    {`${item.job}`}{" "}
+                    <FcPlus className=" cursor-pointer" onClick={() => handleClick_1(index)} size={23} />
+                  </li>
+                ))}
+              </ul>
+
+   
               </div>
             </CardBody>
           </Card>
@@ -221,13 +135,28 @@ const MyWong = () => {
           <Card className="ring-1 ring-gray-200">
             <CardBody>
               <div className="flex flex-col md:flex-row gap-4">
-                <Button color="green" onClick={() => HandleSelectBtn(1)} size="sm" className=" text-sm">
+                <Button
+                  color="green"
+                  onClick={() => HandleSelectBtn(1)}
+                  size="sm"
+                  className=" text-sm"
+                >
                   ข้อมูลบ้านแชร์
                 </Button>
-                <Button color="blue" onClick={() => HandleSelectBtn(2)} size="sm" className=" text-sm">
+                <Button
+                  color="blue"
+                  onClick={() => HandleSelectBtn(2)}
+                  size="sm"
+                  className=" text-sm"
+                >
                   ข้อมูลวงค์แชร์
                 </Button>
-                <Button color="orange" onClick={() => HandleSelectBtn(3)} size="sm" className=" text-sm">
+                <Button
+                  color="orange"
+                  onClick={() => HandleSelectBtn(3)}
+                  size="sm"
+                  className=" text-sm"
+                >
                   ข้อมูลกิจกรรม
                 </Button>
               </div>
